@@ -11,7 +11,7 @@ const ProtectedAdminRoute = ({ children }) => {
         return <Navigate to="/login" replace />;
     }
 
-    if (user?.role !== 'admin') {
+    if (!user?.roles?.includes('admin')) {
         toast.error('This page is only accessible to administrators');
         return <Navigate to="/" replace />;
     }

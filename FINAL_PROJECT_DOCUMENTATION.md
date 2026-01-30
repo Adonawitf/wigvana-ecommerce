@@ -1,113 +1,127 @@
-# WigVana - E-commerce Platform for Wigs
-**MERN Stack Project Documentation**
+# WigVana: A Final Project Report
+**MERN Stack E-commerce Application for the Ethiopian Wig Market**
+
+---
 
 ## 1. Project Title
-**WigVana**
+**WigVana** – A Comprehensive Online Marketplace for Premium Wigs and Hair Extensions.
 
 ## 2. Group Members
-<!-- Please add your group members' names and IDs here -->
-<!-- Example:
-1. Student Name (ID)
-2. Student Name (ID)
-3. Student Name (ID)
--->
+*To be filled by the student*
+1. [Name] ([ID])
+2. [Name] ([ID])
+3. [Name] ([ID])
 
 ## 3. Problem Statement
-The wig and hair extension market in Ethiopia suffers from fragmentation and lack of transparency. Customers often struggle to find diverse, high-quality products in one location, while independent sellers lack a dedicated platform to reach a wider audience. 
-*   **Limited Access**: Buyers have to physically visit multiple shops to find specific styles.
-*   **Pricing Opacity**: Prices are often negotiable and inconsistent.
-*   **Market Reach**: Sellers are limited to their physical location.
+The traditional wig and hair extension market in Ethiopia currently operates through fragmented physical stores and informal social media channels. This decentralization creates several significant challenges for both consumers and business owners:
+*   **Market Fragmentation**: Customers often spend excessive time visiting multiple physical locations to find specific hair textures, lace types, or colors.
+*   **Information Inconsistency**: There is no standardized way to compare product specifications such as hair origin (human vs. synthetic), length, or cap construction across different vendors.
+*   **Lack of Centralized Moderation**: Without a dedicated platform, ensuring product quality and seller credibility is difficult, leading to a gap in consumer trust.
+*   **Limited Digital Presence for Local Artisans**: Many high-quality local wig makers lack the technical infrastructure to reach a broader national audience.
 
 ## 4. Objectives
-The main objective is to develop a robust web application using the MERN stack that connects wig sellers with buyers.
-*   **Centralized Marketplace**: To create a single platform for diverse wig products.
-*   **Seamless Buying Experience**: To implement a user-friendly shopping cart and checkout process.
-*   **Seller Empowerment**: To provide tools for sellers to manage products and view orders.
-*   **Transparent Pricing**: To ensure clear pricing models including platform fees.
+The primary objective of this project was to design and implement a fully functional, secure, and aesthetically pleasing MERN stack application that bridges the gap between hair product suppliers and consumers.
+*   **Unified Platform**: To create a single digital destination where users can discover and compare diverse wig categories.
+*   **Seller Empowerment**: To provide local businesses with a robust instrument for inventory management, order fulfillment, and store branding.
+*   **Dynamic Resource Management**: To implement a system that efficiently serves high-quality media assets and detailed product metadata from a live database.
+*   **Marketplace Quality Control**: To establish an administrative workflow that moderates product listings before they become visible to the public.
 
 ## 5. Functional and Non-Functional Requirements
 
 ### Functional Requirements
-*   **User Authentication**: Users (Buyers/Sellers) can register and login.
-*   **Product Management**: Sellers can Add, Edit, and Delete products with images.
-*   **Search & Filter**: Users can filter products by category, price, and color.
-*   **Shopping Cart**: Buyers can add items, adjust quantities, and view totals.
-*   **Checkout System**: A multi-step checkout collecting shipping info and simulating payment.
-*   **Order Management**: Buyers can view history; Sellers can view and update order status.
-*   **Admin Dashboard**: Administrators can oversee users and products.
+*   **User Identification & Security**: A multi-role authentication system that differentiates between Buyers, Sellers, and Administrators.
+*   **Dynamic Inventory Discovery**: Real-time product listing with advanced search, category-based filtering, and price sorting.
+*   **Seller Management Suite**: Comprehensive tools for sellers to manage the lifecycle of their products, including detailed variant configuration.
+*   **Administrative Oversight**: A dedicated dashboard for platform moderators to review and approve product submissions to ensure quality standards.
+*   **Automated Asset Linking**: A backend mechanism that automatically associates physical image files with database records for dynamic rendering.
 
 ### Non-Functional Requirements
-*   **Usability**: The UI/UX is designed with Material-UI for a modern, responsive feel.
-*   **Performance**: Optimized React components for fast page loads.
-*   **Data Persistence**: (Currently using LocalStorage for prototype) ensuring data survives refreshes.
-*   **Scalability**: The MERN architecture allows for future backend expansion.
+*   **Premium User Experience**: A responsive and modern interface built with professional-grade design tokens using the Material-UI library.
+*   **System Responsiveness**: High-performance data retrieval using Mongoose lean queries and virtual field population.
+*   **Data Integrity**: Persistent storage using MongoDB Atlas, ensuring that all product, user, and order information is securely stored and retrievable.
+*   **Scalable Architecture**: A modular backend structure that allows for future expansion into mobile applications or additional payment gateways.
 
 ## 6. System Architecture (MERN Stack Overview)
-This project is designed based on the **MERN** stack architecture:
-*   **MongoDB**: (Database) Documents for Users, Products, and Orders.
-*   **Express.js**: (Backend Framework) REST API to handle requests.
-*   **React.js**: (Frontend) Dynamic user interface for handling the presentation layer.
-*   **Node.js**: (Runtime) Server-side environment.
+WigVana utilizes the industry-standard MERN architecture to provide a high-performance, single-page application experience.
 
-*Note: The current prototype heavily focuses on the **React** frontend implementation with simulated backend logic and persistence via LocalStorage to demonstrate full CRUD functionality before backend deployment.*
+```mermaid
+graph TD
+    Client((User Client)) -->|Interacts with| Frontend[React.js SPA]
+    Frontend -->|API Calls| Backend[Node.js / Express Server]
+    Backend -->|Logic/Auth| Services[Application Services]
+    Services -->|Data Queries| Database[(MongoDB Database)]
+    Services -->|Media Mapping| Storage[Public Asset Storage]
+```
+
+*   **MongoDB**: Acts as the non-relational database storing user profiles, product catalogs, and category hierarchies.
+*   **Express.js**: Provides the routing framework and middleware for the backend API.
+*   **React.js**: Manages the dynamic views, state, and user interactions on the client side.
+*   **Node.js**: Serves as the runtime environment for the backend services.
 
 ## 7. System Features
-*   **Dynamic Fee Calculation**: System automatically calculates a 5% platform fee for every order.
-*   **Real-time Status Updates**: Sellers can mark orders as "Processing" or "Completed".
-*   **Responsive Design**: Works on desktop and mobile devices.
-*   **Secure Routing**: Protected routes ensure only authenticated users access specific pages.
+*   **Admin-Approved Marketplace**: A distinctive feature where every product uploaded by a seller must be verified by an administrator, ensuring only high-quality items are shown.
+*   **Dynamic Media Population**: Products automatically pull their respective images from the server storage using advanced Mongoose virtuals, eliminating the need for hardcoded paths.
+*   **Context-Aware Navigation**: The interface shifts dynamically based on user roles (e.g., Sellers see product management options, while Admins see moderation tools).
+*   **Intelligent Category Sync**: The platform handles complex hair categories (Natural, Synthetic, Lace Front, etc.) with real-time updates from the database.
 
-## 8. Data Model (Schema Overview)
+## 8. Data Model (Entity Relationship)
+The system is designed with a clear structure to handle the complex relationships between users, their products, and the media assets.
 
-### User Schema
-*   `id`: Unique Identifier
-*   `name`: Full Name
-*   `email`: Email Address
-*   `role`: 'buyer', 'seller', or 'admin'
-*   `storeName`: (For sellers) Name of the shop
+```mermaid
+erDiagram
+    USER ||--o{ PRODUCT : "manages"
+    CATEGORY ||--o{ PRODUCT : "contains"
+    PRODUCT ||--o{ PRODUCT_IMAGE : "displays"
+    USER {
+        string role "admin/seller/buyer"
+        string store_name
+        string email
+    }
+    PRODUCT {
+        string name
+        number price
+        string status "pending/approved"
+    }
+    PRODUCT_IMAGE {
+        string url
+        boolean is_cover
+    }
+```
 
-### Product Schema
-*   `id`: Unique Identifier
-*   `name`: Product Name
-*   `price`: Unit Price
-*   `category`: Type (e.g., Natural, Synthetic)
-*   `image`: Base64 encoded string or URL
-*   `stock`: Quantity available
-*   `sellerId`: Reference to User
+## 9. Database Collections Overview
+The MongoDB database is organized into several key collections:
+*   **Users**: Stores credentials, roles, and profile information.
+*   **Products**: Contains product names, descriptions, prices, and approval statuses.
+*   **Categories**: Defines the classification system for the marketplace.
+*   **ProductImages**: Stores the paths to the high-quality assets served to the frontend.
+*   **SellerProfiles**: Holds specific details about the vendor's digital storefront.
 
-### Order Schema
-*   `id`: Order Reference (e.g., ORD-123)
-*   `items`: Array of product details
-*   `totalAmount`: Final cost including fees
-*   `status`: 'processing', 'completed', 'cancelled'
-*   `shippingDetails`: Address and Contact info
+## 10. API Infrastructure
+The application communicates through a structured REST API. Major endpoints include:
+*   **Authentication**: Handling secure login and registration.
+*   **Marketplace Services**: Public access to browsing and searching approved products.
+*   **Seller Operations**: Authenticated routes for managing inventory and uploading assets.
+*   **Moderation Services**: Administrative routes for product approval and system oversight.
 
-## 9. API Endpoints (Simulated)
+## 11. Screenshots
+*Space reserved for student to insert application screenshots*
 
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/api/products` | Fetch all available products |
-| `POST` | `/api/products` | Create a new product (Seller only) |
-| `GET` | `/api/orders` | Fetch user's order history |
-| `POST` | `/api/orders` | Place a new order |
-| `PUT` | `/api/orders/:id` | Update order status (Seller only) |
+### Home Page and Hero Section
+*(Insert Screenshot Here)*
 
-## 10. Screenshots
-<!-- Please add screenshots of your running application here -->
+### Product Listing with Dynamic Filter
+*(Insert Screenshot Here)*
 
-### Login Page
-<!-- [Add Login Screenshot] -->
+### Seller Dashboard and Product Management
+*(Insert Screenshot Here)*
 
-### Dashboard / Home
-<!-- [Add Home Page Screenshot] -->
+### Admin Moderation Interface
+*(Insert Screenshot Here)*
 
-### CRUD Operations (Add Product)
-<!-- [Add 'Add Product' Form Screenshot] -->
+## 12. Conclusion & Recommendations
+The WigVana project successfully demonstrates a full-scale migration from a frontend-only prototype to a dynamic, database-driven e-commerce environment. By centralizing the wig market and implementing strict quality controls, the platform provides a professional solution for both local sellers and their customers.
 
-### Checkout & Orders
-<!-- [Add Checkout or Order History Screenshot] -->
-
-## 11. Conclusion & Recommendations
-WigVana successfully demonstrates the core capabilities of a modern e-commerce platform. It solves the problem of market fragmentation by centralizing wig sales. 
-*   **Conclusion**: The project meets the functional requirements of CRUD operations, authentication, and state management.
-*   **Recommendations**: Future work should focus on integrating the physical MongoDB backend, adding real payment gateway integration (Stripe/Chapa), and implementing real-time notifications using WebSockets.
+### Recommendations
+*   **Payment Gateway Integration**: Future versions should integrate local mobile money services like TeleBirr or Chapa for real-time transactions.
+*   **Advanced Personalization**: Implementing a recommendation engine based on user browsing history for a more personalized shopping experience.
+*   **Native Mobile Development**: Expanding the platform into a native mobile app to provide push notifications for order updates and new arrivals.

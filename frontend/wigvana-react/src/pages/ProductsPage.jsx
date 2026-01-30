@@ -22,44 +22,20 @@ import {
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import FavoriteIcon from '@mui/icons-material/Favorite';
+import { useProducts } from '../context/ProductContext';
 import { useAuth } from '../context/AuthContext';
 import { useFavorites } from '../context/FavoritesContext';
 import { useToast } from '../context/ToastContext';
-import productsData from '../data/products.json';
+import client from '../api/client';
 
-// Create a ProductsContext to manage all products
-const ProductsContext = React.createContext();
-
-export const ProductsProvider = ({ children }) => {
-  const [allProducts, setAllProducts] = useState([]);
-
-  const addProduct = (product) => {
-    setAllProducts(prev => [...prev, product]);
-  };
-
-  return (
-    <ProductsContext.Provider value={{ allProducts, addProduct }}>
-      {children}
-    </ProductsContext.Provider>
-  );
-};
-
-export const useProducts = () => {
-  const context = React.useContext(ProductsContext);
-  if (!context) {
-    throw new Error('useProducts must be used within a ProductsProvider');
-  }
-  return context;
-};
 
 const ProductsPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { products: allProducts, loading, fetchProducts } = useProducts();
   const { favorites, addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
   const { showToast } = useToast();
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [category, setCategory] = useState('all');
   const [sortBy, setSortBy] = useState('featured');
@@ -74,45 +50,19 @@ const ProductsPage = () => {
     if (cat) setCategory(cat);
   }, [location]);
 
-  // Initialize with mock products + localStorage products
+  // Fetch categories from backend
+  const [categories, setCategories] = useState([]);
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchCategories = async () => {
       try {
-        setLoading(true);
-
-        // 1. Start with static mock data
-        let allProducts = [...productsData.products];
-
-        // 2. Fetch all seller products from localStorage
-        // We look for keys starting with "seller_products_"
-        const sellerProductKeys = Object.keys(localStorage).filter(key =>
-          key.startsWith('seller_products_')
-        );
-
-        sellerProductKeys.forEach(key => {
-          try {
-            const savedProducts = JSON.parse(localStorage.getItem(key));
-            if (Array.isArray(savedProducts)) {
-              // Avoid duplicates if any ID collision (though rare with Date.now())
-              allProducts = [...allProducts, ...savedProducts];
-            }
-          } catch (e) {
-            console.error(`Error parsing products for key ${key}`, e);
-          }
-        });
-
-        // Remove any potential duplicates by ID if necessary, but simply appending is fine for this demo
-        // considering IDs are distinct (static are numeric/string, dynamic are Date.now())
-
-        setProducts(allProducts);
-      } catch (error) {
-        console.error('Error fetching products:', error);
-        showToast('Failed to load products', 'error');
-      } finally {
-        setLoading(false);
+        const { data } = await client.get('/categories?limit=100');
+        setCategories(data.results || []);
+      } catch (err) {
+        console.error("Error fetching categories", err);
       }
     };
-    fetchProducts();
+    fetchCategories();
+    fetchProducts(); // Ensure products are fresh
   }, []);
 
   const handleSearch = (e) => {
@@ -139,36 +89,45 @@ const ProductsPage = () => {
   };
 
   // Filter and sort products
-  const filteredProducts = products.filter(product => {
+  const filteredProducts = allProducts.filter(product => {
     // Convert search query and product text to lowercase for case-insensitive comparison
     const searchLower = searchQuery.toLowerCase().trim();
+    const productName = product.name || '';
+    const productDesc = product.description || '';
+    const productCat = product.category || (typeof product.categoryId === 'object' ? product.categoryId.name : '');
+
     const matchesSearch = !searchLower ||
-      product.name.toLowerCase().includes(searchLower) ||
-      product.description.toLowerCase().includes(searchLower) ||
-      product.category.toLowerCase().includes(searchLower) ||
-      (product.tags && product.tags.some(tag => tag.toLowerCase().includes(searchLower)));
+      productName.toLowerCase().includes(searchLower) ||
+      productDesc.toLowerCase().includes(searchLower) ||
+      productCat.toLowerCase().includes(searchLower);
 
     // Match category exactly (case-insensitive)
     const matchesCategory = category === 'all' ||
-      product.category.toLowerCase() === category.toLowerCase();
+      productCat.toLowerCase() === category.toLowerCase();
 
+    const price = product.basePrice || product.price || 0;
     const matchesPriceRange = priceRange === 'all' ||
-      (priceRange === 'under5000' && product.price < 5000) ||
-      (priceRange === '5000-10000' && product.price >= 5000 && product.price <= 10000) ||
-      (priceRange === 'over10000' && product.price > 10000);
+      (priceRange === 'under5000' && price < 5000) ||
+      (priceRange === '5000-10000' && price >= 5000 && price <= 10000) ||
+      (priceRange === 'over10000' && price > 10000);
 
     return matchesSearch && matchesCategory && matchesPriceRange;
   });
 
   // Sort products
   const sortedProducts = [...filteredProducts].sort((a, b) => {
+    const priceA = a.basePrice || a.price || 0;
+    const priceB = b.basePrice || b.price || 0;
+    const ratingA = a.averageRating || a.rating || 0;
+    const ratingB = b.averageRating || b.rating || 0;
+
     switch (sortBy) {
       case 'priceLow':
-        return a.price - b.price;
+        return priceA - priceB;
       case 'priceHigh':
-        return b.price - a.price;
+        return priceB - priceA;
       case 'rating':
-        return b.rating - a.rating;
+        return ratingB - ratingA;
       default:
         return 0;
     }
@@ -223,12 +182,9 @@ const ProductsPage = () => {
                 onChange={(e) => setCategory(e.target.value)}
               >
                 <MenuItem value="all">All Categories</MenuItem>
-                <MenuItem value="Natural Wigs">Natural Wigs</MenuItem>
-                <MenuItem value="Synthetic Wigs">Synthetic Wigs</MenuItem>
-                <MenuItem value="Lace Front">Lace Front</MenuItem>
-                <MenuItem value="Full Lace">Full Lace</MenuItem>
-                <MenuItem value="Human Hair">Human Hair</MenuItem>
-                <MenuItem value="Braided Wigs">Braided Wigs</MenuItem>
+                {categories.map(cat => (
+                  <MenuItem key={cat._id || cat.id} value={cat.name}>{cat.name}</MenuItem>
+                ))}
               </Select>
             </FormControl>
           </Grid>
@@ -300,7 +256,7 @@ const ProductsPage = () => {
               >
                 <FavoriteIcon
                   sx={{
-                    color: isFavorite(product.id) ? '#67442E' : 'rgba(0, 0, 0, 0.54)',
+                    color: isFavorite(product._id || product.id) ? '#67442E' : 'rgba(0, 0, 0, 0.54)',
                   }}
                 />
               </IconButton>
@@ -316,17 +272,17 @@ const ProductsPage = () => {
                   {product.name}
                 </Typography>
                 <Typography variant="body1" color="text.primary" sx={{ fontWeight: 'bold', mb: 1 }}>
-                  ETB {product.price.toLocaleString()}
+                  ETB {(product.basePrice || product.price || 0).toLocaleString()}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Rating value={product.rating} readOnly precision={0.5} size="small" />
+                  <Rating value={product.averageRating || product.rating || 0} readOnly precision={0.5} size="small" />
                   <Typography variant="body2" sx={{ ml: 1 }}>
-                    ({product.reviewCount})
+                    ({product.reviewCount || 0})
                   </Typography>
                 </Box>
                 <Button
                   component={Link}
-                  to={`/products/${product.id}`}
+                  to={`/products/${product._id || product.id}`}
                   variant="contained"
                   fullWidth
                   sx={{

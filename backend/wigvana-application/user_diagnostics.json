@@ -1,0 +1,49 @@
+[
+  {
+    "email": "testbuyer@example.com",
+    "id": "304ad46d-9e83-434f-82e2-c615afaa7a7d",
+    "roles": [
+      "buyer"
+    ],
+    "createdAt": "2026-01-30T14:40:47.788Z",
+    "accountStatus": "pending_verification"
+  },
+  {
+    "email": "khalidtester@gmail.com",
+    "id": "c72bb19b-380e-4a43-9233-e7856079aa7d",
+    "roles": [
+      "buyer"
+    ],
+    "createdAt": "2026-01-30T16:02:47.185Z",
+    "accountStatus": "active"
+  },
+  {
+    "email": "admin@wigvana.com",
+    "id": "21e0986a-06fa-47b9-9c08-c9f6d195f295",
+    "roles": [
+      "buyer",
+      "admin",
+      "seller"
+    ],
+    "createdAt": "2026-01-30T16:32:32.560Z",
+    "accountStatus": "active"
+  },
+  {
+    "email": "buyer3@example.com",
+    "id": "d02db520-2e62-47a6-89d3-cae3838884af",
+    "roles": [
+      "buyer"
+    ],
+    "createdAt": "2026-01-30T16:39:27.999Z",
+    "accountStatus": "pending_verification"
+  },
+  {
+    "email": "buyer4@example.com",
+    "id": "ed5fbc0e-3c8e-4d23-a402-f960d89df480",
+    "roles": [
+      "buyer"
+    ],
+    "createdAt": "2026-01-30T16:52:46.082Z",
+    "accountStatus": "active"
+  }
+]

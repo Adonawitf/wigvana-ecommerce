@@ -36,6 +36,8 @@ const router = express.Router();
 router.use(protect);
 router.use(authorize(["admin"]));
 
+router.get("/stats", adminController.getStats);
+
 /**
  * @openapi
  * tags:

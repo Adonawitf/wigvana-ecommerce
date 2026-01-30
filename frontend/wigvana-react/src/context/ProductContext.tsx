@@ -1,41 +1,45 @@
 import type React from "react";
 import { createContext, useContext, useState, useEffect, use } from "react";
 import AuthContext from "./AuthContext";
+import client from "../api/client";
 
 type ProductProviderProps = {
 	children: React.ReactNode;
 };
 
 interface Product {
-	id: number;
+	_id: string;
+	id?: string; // Support for legacy access
 	name: string;
-	price: number;
+	basePrice: number;
+	price?: number; // Support for legacy access
 	description: string;
-	image: string;
-	category: string;
-	sellerId: number;
-	sellerName: string;
-	rating: number;
+	images: Array<{ imageUrl: string; isCover: boolean }>;
+	image?: string; // Support for legacy access
+	categoryId: any; // Populated or ID
+	category?: string; // Mapping for legacy
+	sellerId: any; // Populated or ID
+	sellerName?: string;
+	rating?: number;
+	averageRating?: number;
 	reviewCount: number;
-	stocks: number;
-	availableLengths: string[];
-	availableColors: string[];
-	features: string[];
-	isFeatured?: boolean;
+	stockQuantity?: number;
 	stock?: number;
+	availableLengths?: string[];
+	availableColors?: string[];
+	features?: string[];
+	isFeatured?: boolean;
 }
 
 type Products = Product[];
 
-type ApiProducts = {
-	products: Products;
-};
-
 interface ProductContextType {
 	products: Products;
-	addProduct: (product: Product) => Product;
-	updateProduct: (productId: number, product: Partial<Product>) => void;
-	deleteProduct: (productId: number) => void;
+	loading: boolean;
+	fetchProducts: () => Promise<void>;
+	addProduct: (product: any) => Promise<Product>;
+	updateProduct: (productId: string, product: any) => Promise<void>;
+	deleteProduct: (productId: string) => Promise<void>;
 	getSellerProducts: () => Products;
 }
 
@@ -53,68 +57,104 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({
 	children,
 }) => {
 	const authContext = use(AuthContext);
-
-	if (!authContext) {
-		throw new Error("No AuthContextProvider found.");
-	}
-
-	const { user } = authContext;
+	const { user } = authContext || {};
 
 	const [products, setProducts] = useState<Products>([]);
+	const [loading, setLoading] = useState(false);
 
-	// Load products from localStorage when component mounts
-	useEffect(() => {
-		if (user?.isSeller) {
-			const savedProducts = localStorage.getItem(`seller_products_${user.id}`);
-			if (savedProducts) {
-				setProducts(JSON.parse(savedProducts));
+	const fetchProducts = async () => {
+		try {
+			setLoading(true);
+			const { data: publicData } = await client.get("/products?limit=100");
+			const publicResults = publicData.results || [];
+
+			let allResults = [...publicResults];
+
+			// If logged in as seller, also fetch owned products (even pending/private)
+			const sellerId = user?._id || user?.id;
+			if (user?.isSeller && sellerId) {
+				console.log("Fetching seller products for sellerId:", sellerId);
+				try {
+					const { data: sellerData } = await client.get("/me/products?limit=100");
+					const sellerResults = (sellerData.results || []).map((p: any) => ({
+						...p,
+						// Ensure sellerId is set even if implicit in backend response
+						sellerId: p.sellerId || sellerId
+					}));
+					console.log("Fetched seller products:", sellerResults.length);
+
+					// Merge and avoid duplicates by ID
+					sellerResults.forEach((sp: any) => {
+						const existingIdx = allResults.findIndex(p => (p._id || p.id) === (sp._id || sp.id));
+						if (existingIdx !== -1) {
+							// Update existing with more complete data from /me/products
+							allResults[existingIdx] = { ...allResults[existingIdx], ...sp };
+						} else {
+							allResults.push(sp);
+						}
+					});
+				} catch (err) {
+					console.error("Error fetching seller products:", err);
+				}
 			}
-		}
-	}, [user]);
 
-	// Save products to localStorage whenever they change
+			// Map backend props to legacy props for compatibility
+			const mapped = allResults.map((p: any) => ({
+				...p,
+				id: p._id,
+				price: p.basePrice,
+				image: p.images?.[0]?.imageUrl || "https://via.placeholder.com/200",
+				category: (typeof p.categoryId === 'object' ? p.categoryId.name : '') || "Uncategorized",
+				rating: p.averageRating || 0,
+				stock: p.stockQuantity || 0
+			}));
+
+			setProducts(mapped);
+		} catch (error) {
+			console.error("Error fetching products:", error);
+		} finally {
+			setLoading(false);
+		}
+	};
+
 	useEffect(() => {
-		if (user?.isSeller) {
-			localStorage.setItem(
-				`seller_products_${user.id}`,
-				JSON.stringify(products),
-			);
-		}
-	}, [products, user]);
+		fetchProducts();
+	}, [user?._id, user?.isSeller]);
 
-	const addProduct = (product: Product) => {
-		const newProduct = {
-			...product,
-			id: Date.now(),
-			sellerId: user?.id || 0,
-			createdAt: new Date().toISOString(),
-		};
-		setProducts((prevProducts) => [...prevProducts, newProduct]);
-		return newProduct;
+	const addProduct = async (productData: any) => {
+		const { data } = await client.post("/me/products", productData);
+		await fetchProducts(); // Refresh
+		return data;
 	};
 
-	const updateProduct = (productId: number, updatedData: Partial<Product>) => {
-		setProducts((prevProducts) =>
-			prevProducts.map((product) =>
-				product.id === productId ? { ...product, ...updatedData } : product,
-			),
-		);
+	const updateProduct = async (productId: string, updatedData: any) => {
+		await client.put(`/me/products/${productId}`, updatedData);
+		await fetchProducts();
 	};
 
-	const deleteProduct = (productId: number) => {
-		setProducts((prevProducts) =>
-			prevProducts.filter((product) => product.id !== productId),
-		);
+	const deleteProduct = async (productId: string) => {
+		await client.delete(`/me/products/${productId}`);
+		await fetchProducts();
 	};
 
 	const getSellerProducts = () => {
-		return products.filter((product) => product.sellerId === user?.id);
+		// Filter by seller ID if available
+		const sellerId = user?._id || user?.id;
+		if (!sellerId) return [];
+		return products.filter((product) => {
+			const prodSellerId = typeof product.sellerId === 'object'
+				? (product.sellerId._id || product.sellerId.id)
+				: product.sellerId;
+			return prodSellerId === sellerId;
+		});
 	};
 
 	return (
 		<ProductContext.Provider
 			value={{
 				products,
+				loading,
+				fetchProducts,
 				addProduct,
 				updateProduct,
 				deleteProduct,

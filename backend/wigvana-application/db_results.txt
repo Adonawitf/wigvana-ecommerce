@@ -1,0 +1,8 @@
+Connected to DB
+Total products in DB: 3
+Product: Cornrow Braided Wig for Women, ID: b3cfad61-b8ec-4e13-a383-3a515971ba8d, SellerID: 216cd0dd-e27a-4f06-8256-37372771757e, Approval: approved, Published: true
+Product: curly, ID: 82544979-c838-4fef-b3e2-b05b75e6b430, SellerID: 216cd0dd-e27a-4f06-8256-37372771757e, Approval: pending, Published: true
+Product: Full lace body wave, ID: 8d4f223c-7bba-467b-906f-43abd29f11d8, SellerID: 216cd0dd-e27a-4f06-8256-37372771757e, Approval: pending, Published: true
+Total sellers in DB: 2
+Seller: admin@wigvana.com, ID: 21e0986a-06fa-47b9-9c08-c9f6d195f295
+Seller: seller5@example.com, ID: 216cd0dd-e27a-4f06-8256-37372771757e

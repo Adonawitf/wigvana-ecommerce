@@ -32,6 +32,7 @@ import { useToast } from '../context/ToastContext';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useMessaging } from '../context/MessagingContext';
+import client from '../api/client';
 
 const ProductDetailsPage = () => {
   const { id } = useParams();
@@ -53,34 +54,21 @@ const ProductDetailsPage = () => {
     const fetchProductDetails = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/src/data/products.json');
-        const data = await response.json();
+        const { data } = await client.get(`/products/${id}`);
 
-        let allProducts = [...data.products];
-
-        // Merge with localStorage products
-        const sellerProductKeys = Object.keys(localStorage).filter(key =>
-          key.startsWith('seller_products_')
-        );
-
-        sellerProductKeys.forEach(key => {
-          try {
-            const savedProducts = JSON.parse(localStorage.getItem(key));
-            if (Array.isArray(savedProducts)) {
-              allProducts = [...allProducts, ...savedProducts];
-            }
-          } catch (e) {
-            console.error(`Error parsing products for key ${key}`, e);
-          }
-        });
-
-        console.log("Loaded all products:", allProducts);
-        // Loose comparison for ID (string vs number)
-        const foundProduct = allProducts.find(p => p.id == id);
-
-        if (foundProduct) {
-          setProduct(foundProduct);
-          setCurrentPrice(foundProduct.price);
+        if (data) {
+          // Map backend props to local expected props if necessary
+          const mappedProduct = {
+            ...data,
+            id: data._id,
+            price: data.basePrice,
+            image: data.images?.[0]?.imageUrl || 'https://via.placeholder.com/500',
+            sellerName: data.sellerId ? `${data.sellerId.firstName} ${data.sellerId.lastName}` : 'Unknown Seller',
+            rating: data.averageRating || 0,
+            reviewCount: data.reviewCount || 0
+          };
+          setProduct(mappedProduct);
+          setCurrentPrice(mappedProduct.price);
         } else {
           showToast('Product not found', 'error');
           navigate('/products');

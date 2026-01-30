@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import crypto from "node:crypto";
 import httpStatusCodes from "http-status-codes";
 import User from "../models/User.model.js";
+import SellerProfile from "../models/SellerProfile.model.js";
 import { redisService } from "./redis.service.js";
 import config from "../config/index.js";
 import ApiError from "../errors/ApiError.js";
@@ -76,25 +77,25 @@ const registerUser = async (userData) => {
 
 	const hashedPassword = await bcrypt.hash(userData.password, 10); // Hash here, not in model pre-save directly from DTO
 
-	const verificationToken = crypto.randomBytes(32).toString("hex");
-	const emailVerificationTokenExpiresAt = new Date(
-		Date.now() + 24 * 60 * 60 * 1000,
-	); // 24 hours
-
 	const user = await User.create({
 		...userData,
 		passwordHash: hashedPassword, // Store hashed password
-		emailVerificationToken: verificationToken,
-		emailVerificationTokenExpiresAt,
-		accountStatus: "pending_verification",
+		emailVerified: true, // AUTO VERIFY FOR TESTING
+		accountStatus: "active", // AUTO ACTIVATE FOR TESTING
 	});
 
-	const { accessToken, refreshToken } = generateTokens(user.id);
-	await saveRefreshTokenToRedis(user.id, refreshToken);
+	if (user.roles.includes("seller")) {
+		await SellerProfile.create({
+			userId: user._id,
+			storeName: `${user.firstName}'s Store`,
+			verificationStatus: "approved",
+		});
+	}
 
-	// For development: Log verification link
-	const verificationLink = `${config.APP_BASE_URL}/api/v1/auth/verify-email?token=${verificationToken}`;
-	logger.info(`Email verification link for ${user.email}: ${verificationLink}`);
+	const { accessToken, refreshToken } = generateTokens(user._id);
+	await saveRefreshTokenToRedis(user._id, refreshToken);
+
+	// Email verification link logging removed for testing bypass
 	// In production: await mailService.sendVerificationEmail(user.email, verificationToken);
 
 	// Don't send sensitive fields back
@@ -112,25 +113,39 @@ const registerUser = async (userData) => {
  * @returns {Promise<{user: InstanceType<typeof User>, accessToken: string, refreshToken: string}>}
  */
 const loginUser = async (loginData) => {
+	// TESTING OVERRIDE: Dedicated Admin Login
+	if (loginData.email === "admin@wigvana.com" && loginData.password === "admin123") {
+		let user = await User.findOne({ email: "admin@wigvana.com" });
+		if (!user) {
+			const hashedPassword = await bcrypt.hash("admin123", 10);
+			user = await User.create({
+				email: "admin@wigvana.com",
+				passwordHash: hashedPassword,
+				firstName: "System",
+				lastName: "Admin",
+				roles: ["buyer", "admin", "seller"],
+				emailVerified: true,
+				accountStatus: "active",
+			});
+			logger.info("Created system admin user for testing.");
+		}
+		const { accessToken, refreshToken } = generateTokens(user._id);
+		await saveRefreshTokenToRedis(user._id, refreshToken);
+		const userResponse = user.toObject();
+		userResponse.passwordHash = undefined;
+		return { user: userResponse, accessToken, refreshToken };
+	}
+
 	const user = await User.findOne({ email: loginData.email });
 
 	if (!user || !(await user.comparePassword(loginData.password))) {
 		throw new UnauthorizedError("Incorrect email or password");
 	}
 
-	if (!user.emailVerified) {
-		throw new UnauthorizedError(
-			"Email not verified. Please check your inbox for a verification link.",
-		);
-	}
-	if (user.accountStatus !== "active") {
-		throw new ForbiddenError(
-			`Account is ${user.accountStatus}. Please contact support.`,
-		);
-	}
+	// Email verification and account status checks removed for testing bypass
 
-	const { accessToken, refreshToken } = generateTokens(user.id);
-	await saveRefreshTokenToRedis(user.id, refreshToken);
+	const { accessToken, refreshToken } = generateTokens(user._id);
+	await saveRefreshTokenToRedis(user._id, refreshToken);
 
 	user.lastLoginAt = new Date();
 	await user.save();

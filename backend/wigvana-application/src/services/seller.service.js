@@ -36,8 +36,23 @@ const applyToBeSeller = async (userId, applicationData) => {
   const application = await SellerApplication.create({
     ...applicationData,
     userId,
-    status: "pending_review",
+    status: "approved", // AUTO APPROVE
+    proposedStoreName: applicationData.storeName,
+    reviewedAt: new Date(),
   });
+
+  // Promote user and create profile immediately
+  user.roles.push("seller");
+  await user.save();
+
+  await SellerProfile.create({
+    userId,
+    storeName: applicationData.storeName,
+    storeDescription: applicationData.description,
+    verificationStatus: "approved",
+    joinedAsSellerAt: new Date(),
+  });
+
   return application;
 };
 

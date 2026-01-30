@@ -107,15 +107,34 @@ const productSchema = new mongoose.Schema(
 			shippingClass: String,
 			type: mongoose.Schema.Types.Mixed,
 		},
+		stockQuantity: {
+			type: Number,
+			default: 0,
+			min: 0,
+		},
+		availableLengths: {
+			type: [String],
+			default: [],
+		},
+		availableColors: {
+			type: [String],
+			default: [],
+		},
 		// ProductImages and ProductVariants will be separate collections linking to this Product
 	},
 	{
 		timestamps: true,
 		toJSON: { getters: true, virtuals: true },
 		toObject: { getters: true, virtuals: true },
-		id: false,
 	},
 );
+
+// Virtual field to link Product with ProductImage
+productSchema.virtual("images", {
+	ref: "ProductImage",
+	localField: "_id",
+	foreignField: "productId",
+});
 
 // Pre-save hook to generate slug from name if not provided
 productSchema.pre("save", function (next) {

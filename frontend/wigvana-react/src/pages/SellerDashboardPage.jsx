@@ -10,6 +10,7 @@ import {
   CardContent,
   Button,
   Divider,
+  CircularProgress,
 } from '@mui/material';
 import {
   Inventory as InventoryIcon,
@@ -18,39 +19,73 @@ import {
   TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
+import { useProducts } from '../context/ProductContext';
+import client from '../api/client';
 
 const SellerDashboardPage = () => {
-  const { user } = useAuth();
+  const { user, becomeSeller } = useAuth();
+  const { products, getSellerProducts, loading: productsLoading } = useProducts();
   const navigate = useNavigate();
+  const [activating, setActivating] = React.useState(false);
+
+  const handleActivateSeller = async () => {
+    setActivating(true);
+    await becomeSeller({
+      storeName: `${user?.firstName || 'My'}'s Boutique`,
+      description: 'Welcome to my new boutique on WigVana!'
+    });
+    setActivating(false);
+  };
 
   if (!user || !user.isSeller) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Paper sx={{ p: 4, textAlign: 'center' }}>
-          <Typography variant="h5" gutterBottom>
-            Seller Access Required
+      <Container maxWidth="lg" sx={{ py: 8 }}>
+        <Paper elevation={3} sx={{ p: 6, textAlign: 'center', borderRadius: 4, bgcolor: '#FBF7F4' }}>
+          <Typography variant="h3" sx={{ color: '#67442E', mb: 2, fontWeight: 'bold' }}>
+            Start Your Selling Journey
           </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            You need to be a registered seller to access this dashboard.
+          <Typography variant="h6" color="text.secondary" sx={{ mb: 4, maxWidth: 600, mx: 'auto' }}>
+            Transform your passion for wigs into a thriving business. Join Ethiopia's premier marketplace today.
           </Typography>
-          <Button
-            variant="contained"
-            onClick={() => navigate('/seller-guide')}
-            sx={{ bgcolor: '#67442E', '&:hover': { bgcolor: '#523524' } }}
-          >
-            Become a Seller
-          </Button>
+
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center' }}>
+            <Button
+              variant="contained"
+              size="large"
+              disabled={activating}
+              onClick={handleActivateSeller}
+              sx={{
+                bgcolor: '#67442E',
+                px: 6,
+                py: 1.5,
+                fontSize: '1.2rem',
+                borderRadius: 2,
+                '&:hover': { bgcolor: '#523524' }
+              }}
+            >
+              {activating ? <CircularProgress size={24} color="inherit" /> : 'Activate Seller Account Now'}
+            </Button>
+
+            <Button
+              variant="text"
+              onClick={() => navigate('/seller-guide')}
+              sx={{ color: '#67442E' }}
+            >
+              Learn More in Seller Guide
+            </Button>
+          </Box>
         </Paper>
       </Container>
     );
   }
 
-  // Mock statistics - replace with actual API calls
+  // Actual statistics
+  const sellerProducts = getSellerProducts();
   const stats = {
-    totalProducts: 12,
-    totalOrders: 45,
-    averageRating: 4.5,
-    totalRevenue: 125000,
+    totalProducts: sellerProducts.length,
+    totalOrders: 0, // TODO: Integrate with real orders API
+    averageRating: sellerProducts.reduce((acc, p) => acc + (p.averageRating || 0), 0) / (sellerProducts.length || 1),
+    totalRevenue: 0,
   };
 
   const dashboardCards = [
@@ -172,12 +207,47 @@ const SellerDashboardPage = () => {
               Recent Activity
             </Typography>
             <Box>
-              <Typography variant="body2" color="text.secondary">
-                No recent activity to display.
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                Start by adding products or managing orders.
-              </Typography>
+              {sellerProducts.length === 0 ? (
+                <>
+                  <Typography variant="body2" color="text.secondary">
+                    No recent activity to display.
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    Start by adding products or managing orders.
+                  </Typography>
+                </>
+              ) : (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {[...sellerProducts]
+                    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                    .slice(0, 3)
+                    .map((p) => (
+                      <Box key={p._id} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 1.5, bgcolor: '#FBF7F4', borderRadius: 1 }}>
+                        <Box>
+                          <Typography variant="subtitle2">{p.name}</Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Added on {new Date(p.createdAt).toLocaleDateString()}
+                          </Typography>
+                        </Box>
+                        <Typography variant="caption" sx={{
+                          px: 1, py: 0.5, borderRadius: 1,
+                          bgcolor: p.approvalStatus === 'approved' ? '#e8f5e9' : '#fff3e0',
+                          color: p.approvalStatus === 'approved' ? '#2e7d32' : '#ed6c02',
+                          fontWeight: 'bold'
+                        }}>
+                          {p.approvalStatus.toUpperCase()}
+                        </Typography>
+                      </Box>
+                    ))}
+                  <Button
+                    size="small"
+                    onClick={() => navigate('/seller/products')}
+                    sx={{ alignSelf: 'flex-start', mt: 1, color: '#67442E' }}
+                  >
+                    View All Activity
+                  </Button>
+                </Box>
+              )}
             </Box>
           </Paper>
         </Grid>

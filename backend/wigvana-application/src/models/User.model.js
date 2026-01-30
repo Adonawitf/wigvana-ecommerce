@@ -99,7 +99,6 @@ const userSchema = new mongoose.Schema(
 			virtuals: true,
 		},
 		toObject: { getters: true, virtuals: true },
-		id: false, // Disable default _id virtual, we use our own string _id
 	},
 );
 

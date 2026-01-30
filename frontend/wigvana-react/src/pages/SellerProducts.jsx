@@ -27,6 +27,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import ImageUpload from '../components/ImageUpload';
 import { Formik, Form, Field } from 'formik';
 import { TextField } from 'formik-mui';
 import * as Yup from 'yup';
@@ -117,7 +118,7 @@ const SellerProducts = () => {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
     try {
       await client.delete(`/me/products/${productId}`);
-      setProducts(products.filter(p => p.id !== productId));
+      setProducts(products.filter(p => (p._id || p.id) !== productId));
       showToast('Product deleted successfully', 'success');
     } catch (error) {
       showToast('Failed to delete product', 'error');
@@ -127,18 +128,19 @@ const SellerProducts = () => {
   const handleSubmit = async (values, { setSubmitting, resetForm }) => {
     try {
       // 1. Prepare Product Payload
-      const enrichedDescription = `${values.description}\n\nAvailable Lengths: ${values.availableLengths.join(', ')}\nAvailable Colors: ${values.availableColors.join(', ')}`;
-
       const payload = {
         name: values.name,
-        description: enrichedDescription,
+        description: values.description,
         categoryId: values.category, // Must be UUID
         basePrice: Number(values.price),
+        stockQuantity: Number(values.stock),
+        availableLengths: values.availableLengths,
+        availableColors: values.availableColors,
         currency: 'USD',
         isPublished: true
       };
 
-      let productId = editingProduct?.id;
+      let productId = editingProduct?._id || editingProduct?.id;
 
       // 2. Create or Update Product
       if (editingProduct) {
@@ -146,7 +148,7 @@ const SellerProducts = () => {
         showToast('Product updated successfully', 'success');
       } else {
         const { data } = await client.post('/me/products', payload);
-        productId = data.id;
+        productId = data._id || data.id;
         showToast('Product created successfully', 'success');
       }
 
@@ -265,14 +267,16 @@ const SellerProducts = () => {
             </TableHead>
             <TableBody>
               {products.map((product) => {
-                // Helper to find category name
-                const catName = categories.find(c => c.id === product.category)?.name || product.category || 'Unknown';
+                // Helper to find category name (robust handling for populated or ID version)
+                const catObj = typeof product.categoryId === 'object' ? product.categoryId : null;
+                const catId = catObj ? catObj._id : product.categoryId;
+                const catName = catObj?.name || categories.find(c => (c._id || c.id) === catId)?.name || 'Unknown';
                 // Helper for image
                 // If backend returns `images` array, take first. Else try `image` field.
                 const displayInfo = product.images?.[0]?.imageUrl || product.image || 'https://via.placeholder.com/50';
 
                 return (
-                  <TableRow key={product.id}>
+                  <TableRow key={product._id || product.id}>
                     <TableCell>
                       <img
                         src={displayInfo}
@@ -288,7 +292,7 @@ const SellerProducts = () => {
                       <IconButton onClick={() => handleEdit(product)}>
                         <EditIcon />
                       </IconButton>
-                      <IconButton onClick={() => handleDelete(product.id)} color="error">
+                      <IconButton onClick={() => handleDelete(product._id || product.id)} color="error">
                         <DeleteIcon />
                       </IconButton>
                     </TableCell>
@@ -307,11 +311,11 @@ const SellerProducts = () => {
         <Formik
           initialValues={editingProduct ? {
             name: editingProduct.name || '',
-            price: editingProduct.price || '',
-            category: editingProduct.category || '',
+            price: editingProduct.basePrice || editingProduct.price || '',
+            category: editingProduct.categoryId?._id || editingProduct.categoryId || '',
             description: editingProduct.description || '',
-            stock: editingProduct.stock || '',
-            image: editingProduct.image || null,
+            stock: editingProduct.stockQuantity || editingProduct.stock || '',
+            image: editingProduct.images?.[0]?.imageUrl || editingProduct.image || null,
             availableLengths: Array.isArray(editingProduct.availableLengths) ? editingProduct.availableLengths : [],
             availableColors: Array.isArray(editingProduct.availableColors) ? editingProduct.availableColors : [],
           } : {
@@ -373,7 +377,7 @@ const SellerProducts = () => {
                           }}
                         >
                           {categories.map((cat) => (
-                            <MenuItem key={cat.id} value={cat.id}>
+                            <MenuItem key={cat._id || cat.id} value={cat._id || cat.id}>
                               {cat.name}
                             </MenuItem>
                           ))}

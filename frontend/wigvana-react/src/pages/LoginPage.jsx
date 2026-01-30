@@ -55,9 +55,15 @@ const LoginPage = () => {
 
     setLoading(true);
     try {
-      await login(formData.email, formData.password);
-      showToast('Login successful!', 'success');
-      navigate('/');
+      const loggedInUser = await login(formData.email, formData.password);
+      if (loggedInUser) {
+        showToast('Login successful!', 'success');
+        if (loggedInUser.roles?.includes('admin')) {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/');
+        }
+      }
     } catch (err) {
       showToast(
         err instanceof Error ? err.message : 'Invalid email or password',

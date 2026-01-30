@@ -70,12 +70,12 @@ const listProducts = async (queryOptions) => {
   const skip = (page - 1) * limit;
 
   const products = await Product.find(filter)
-    .populate("categoryId", "name slug") // Populate category name/slug
-    // .populate('sellerId', 'storeName') // If you want to show seller store name
+    .populate("categoryId", "name slug")
+    .populate("images")
     .sort(sortOptions)
     .skip(skip)
     .limit(limit)
-    .lean(); // Use .lean() for better performance if not modifying docs
+    .lean({ virtuals: true }); // Use .lean() with virtuals enabled
 
   const totalResults = await Product.countDocuments(filter);
   const totalPages = Math.ceil(totalResults / limit);
@@ -109,8 +109,8 @@ const getProductById = async (productId) => {
     ...getBaseProductQuery(),
   })
     .populate("categoryId", "name slug")
-    // .populate({ path: 'variants', model: ProductVariant }) // If you decide to populate variants directly
-    .lean();
+    .populate("images")
+    .lean({ virtuals: true });
 
   if (!product) {
     throw new ApiError(
@@ -244,13 +244,13 @@ const listProductReviews = async (productId, paginationOptions) => {
     ...review,
     user: review.userId
       ? {
-          // Check if userId was populated
-          // id: review.userId._id, // Don't expose actual user ID unless intended
-          firstName: review.userId.firstName,
-          // Consider showing only initials or a display name for privacy
-          // lastNameInitial: review.userId.lastName ? `${review.userId.lastName.charAt(0)}.` : '',
-          profilePictureUrl: review.userId.profilePictureUrl,
-        }
+        // Check if userId was populated
+        // id: review.userId._id, // Don't expose actual user ID unless intended
+        firstName: review.userId.firstName,
+        // Consider showing only initials or a display name for privacy
+        // lastNameInitial: review.userId.lastName ? `${review.userId.lastName.charAt(0)}.` : '',
+        profilePictureUrl: review.userId.profilePictureUrl,
+      }
       : { firstName: "Anonymous" }, // Fallback if user somehow not populated or deleted
     userId: undefined, // Remove the full userId object from final output
   }));
@@ -434,9 +434,8 @@ const updateSellerOwnedProduct = async (sellerId, productId, updateData) => {
       newSlug = `${slugBase}-${count}`;
     }
     updateData.slug = newSlug;
-  } else {
     // Keep existing slug if name not changed or not provided in updateData (for PATCH)
-    updateData.slug = undefined;
+    delete updateData.slug;
   }
 
   // Update product fields
@@ -494,8 +493,7 @@ const patchSellerOwnedProduct = async (sellerId, productId, updateData) => {
       newSlug = `${slugBase}-${count}`;
     }
     updateData.slug = newSlug;
-  } else {
-    updateData.slug = undefined; // Don't update slug if name isn't changing
+    delete updateData.slug; // Don't update slug if name isn't changing
   }
 
   // For PATCH, only apply fields present in updateData
@@ -669,10 +667,11 @@ const listAllPlatformProducts = async (queryOptions) => {
   const products = await Product.find(filter)
     .populate("sellerId", "firstName lastName email storeName") // storeName from SellerProfile if linked
     .populate("categoryId", "name slug")
+    .populate("images")
     .sort(sortOptions)
     .skip(skip)
     .limit(limit)
-    .lean();
+    .lean({ virtuals: true });
 
   const totalResults = await Product.countDocuments(filter);
   const totalPages = Math.ceil(totalResults / limit);

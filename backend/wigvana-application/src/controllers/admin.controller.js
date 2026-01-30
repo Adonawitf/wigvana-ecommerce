@@ -5,6 +5,9 @@ import { productService } from "../services/product.service.js";
 import { categoryService } from "../services/category.service.js";
 import { orderService } from "../services/order.service.js";
 import { reviewService } from "../services/review.service.js";
+import User from "../models/User.model.js";
+import Product from "../models/Product.model.js";
+import Order from "../models/Order.model.js";
 import catchAsync from "../utils/catchAsync.js";
 import pick from "../utils/pick.js";
 
@@ -193,6 +196,36 @@ const updateReviewStatus = catchAsync(async (req, res) => {
   res.status(httpStatusCodes.OK).send(review);
 });
 
+const getStats = catchAsync(async (req, res) => {
+  const [userCount, productCount, orderCount, revenueData, recentUsers, pendingProducts] = await Promise.all([
+    User.countDocuments(),
+    Product.countDocuments(),
+    Order.countDocuments(),
+    Order.aggregate([
+      { $match: { status: "completed" } },
+      { $group: { _id: null, total: { $sum: "$totalAmount" } } },
+    ]),
+    User.find().sort({ createdAt: -1 }).limit(5).select("-passwordHash"),
+    Product.find({ approvalStatus: "pending" })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .populate("sellerId", "firstName lastName"),
+  ]);
+
+  console.log('Admin Stats Debug:', { userCount, productCount, orderCount, revenueDataLength: revenueData.length });
+
+  const totalRevenue = revenueData.length > 0 ? revenueData[0].total : 0;
+
+  res.status(httpStatusCodes.OK).send({
+    users: userCount,
+    products: productCount,
+    orders: orderCount,
+    revenue: totalRevenue,
+    recentUsers,
+    pendingProducts,
+  });
+});
+
 export const adminController = {
   // Users
   listUsers,
@@ -224,4 +257,6 @@ export const adminController = {
   listAllReviews,
   deleteAnyReview,
   updateReviewStatus,
+  // Stats
+  getStats,
 };

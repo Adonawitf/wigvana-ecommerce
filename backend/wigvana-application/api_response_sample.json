@@ -1,0 +1,55 @@
+{
+  "results": [
+    {
+      "_id": "a7ebec13-28e7-459c-9a58-bf214e2ee8d7",
+      "sellerId": "21e0986a-06fa-47b9-9c08-c9f6d195f295",
+      "categoryId": {
+        "_id": "5990c29c-a7f8-4891-a706-8e46449aefc2",
+        "name": "Braided Wigs",
+        "slug": "braided-wigs"
+      },
+      "name": "Micro Braided Wig",
+      "slug": "micro-braided-wig",
+      "description": "Detailed micro braided wig",
+      "basePrice": 8000,
+      "currency": "ETB",
+      "tags": [],
+      "isFeatured": false,
+      "isPublished": true,
+      "approvalStatus": "approved",
+      "averageRating": 4.7,
+      "reviewCount": 35,
+      "stockQuantity": 8,
+      "availableLengths": [
+        "22",
+        "26",
+        "30"
+      ],
+      "availableColors": [
+        "Black",
+        "Brown",
+        "Blonde"
+      ],
+      "createdAt": "2026-01-30T19:45:37.339Z",
+      "updatedAt": "2026-01-30T19:45:37.339Z",
+      "__v": 0,
+      "images": [
+        {
+          "_id": "21fecfed-12ef-4c6c-8756-c3d9ade2fa95",
+          "productId": "a7ebec13-28e7-459c-9a58-bf214e2ee8d7",
+          "imageUrl": "/images/img18.jpg",
+          "altText": "Micro Braided Wig",
+          "isCover": true,
+          "displayOrder": 0,
+          "createdAt": "2026-01-30T19:45:37.340Z",
+          "updatedAt": "2026-01-30T19:45:37.340Z",
+          "__v": 0
+        }
+      ]
+    }
+  ],
+  "page": 1,
+  "limit": 1,
+  "totalPages": 28,
+  "totalResults": 28
+}
