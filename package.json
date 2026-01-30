@@ -1,0 +1,26 @@
+{
+  "name": "wigvana",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "format": "turbo run format",
+    "format-lint": "turbo run format-lint"
+  },
+  "keywords": [
+    "E-Commerce",
+    "Open-source",
+    "Node",
+    "express"
+  ],
+  "author": "CS323 Group Members",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/termitepreston/wigvana"
+  },
+  "license": "MIT",
+  "packageManager": "pnpm@10.8.0",
+  "devDependencies": {
+    "turbo": "^2.5.0"
+  }
+}

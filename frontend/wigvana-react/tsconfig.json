@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "baseUrl": "./src",
+    "outDir": "./dist",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true, // Recommended, but can be false for JS-only
+    "skipLibCheck": true,
+    "allowJs": true,
+    "checkJs": true, // Enable type checking for JS files
+    "noEmit": true // We are not compiling JS to JS, just type checking
+  },
+  "include": ["src/**/*", "test/**/*"],
+  "exclude": ["node_modules"]
+}
