@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
-import Product from './src/models/Product.model.js';
-import ProductImage from './src/models/ProductImage.model.js';
-import Category from './src/models/Category.model.js';
-import User from './src/models/User.model.js';
-import config from './src/config/index.js';
+import Product from '../src/models/Product.model.js';
+import ProductImage from '../src/models/ProductImage.model.js';
+import Category from '../src/models/Category.model.js';
+import User from '../src/models/User.model.js';
+import config from '../src/config/index.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -27,7 +27,7 @@ async function run() {
         console.log(`Products will be owned by admin: ${admin.email} (${adminId})`);
 
         // 2. Read products.json
-        const productsJsonPath = path.resolve(__dirname, '../../frontend/wigvana-react/src/data/products.json');
+        const productsJsonPath = path.resolve(__dirname, './data/products.json');
         if (!fs.existsSync(productsJsonPath)) {
             console.error(`products.json not found at ${productsJsonPath}`);
             process.exit(1);
