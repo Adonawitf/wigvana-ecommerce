@@ -12,15 +12,21 @@ const client = axios.create({
 client.interceptors.request.use(
     (config) => {
         const storedUser = localStorage.getItem("user");
+        console.log('Interpreting request interceptor. Stored user:', !!storedUser);
         if (storedUser) {
             try {
                 const user = JSON.parse(storedUser);
                 if (user.token) {
+                    console.log('Adding Authorization header to request');
                     config.headers.Authorization = `Bearer ${user.token}`;
+                } else {
+                    console.warn('No token found in user object from localStorage');
                 }
             } catch (error) {
                 console.error("Error parsing user from localStorage", error);
             }
+        } else {
+            console.log('No user found in localStorage');
         }
         return config;
     },

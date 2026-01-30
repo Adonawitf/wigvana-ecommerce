@@ -26,7 +26,7 @@ app.use(pinoHttp({ logger }));
 // Enable CORS - configure origins as needed
 app.use(
 	cors({
-		origin: "*", // Be more restrictive in production
+		origin: ["http://localhost:5174", "http://127.0.0.1:5174"],
 		credentials: true,
 	}),
 );

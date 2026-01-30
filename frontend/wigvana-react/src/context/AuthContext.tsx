@@ -8,17 +8,17 @@ type AuthProviderProps = {
 };
 
 interface User {
-	id: number;
+	_id: string; // Backend uses UUID strings
 	email: string;
 	name: string;
 	firstName?: string;
 	lastName?: string;
 	isSeller: boolean;
 	token: string;
-	role?: string;
+	roles: string[];
 	isSellerProfileComplete?: boolean;
 	storeName?: string;
-	storeId?: number;
+	storeId?: string;
 }
 
 interface RegisterData {
@@ -55,7 +55,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 		// Check for stored user data on component mount
 		const storedUser = localStorage.getItem("user");
 		if (storedUser) {
-			setUser(JSON.parse(storedUser) as User);
+			setUser(JSON.parse(storedUser));
 		}
 		setLoading(false);
 	}, []);
@@ -67,10 +67,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 			const userData = {
 				...data.user,
 				token: data.accessToken,
-				isSeller: data.user.role === 'seller',
+				isSeller: data.user.roles?.includes('seller') || false,
 			};
 
-			setUser(userData);
+			setUser(userData as User);
 			localStorage.setItem("user", JSON.stringify(userData));
 			toast.success("Successfully logged in!");
 			return true;
@@ -95,10 +95,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 			const newUserData = {
 				...data.user,
 				token: data.accessToken,
-				isSeller: data.user.role === 'seller',
+				isSeller: data.user.roles?.includes('seller') || false,
 			};
 
-			setUser(newUserData);
+			setUser(newUserData as User);
 			localStorage.setItem("user", JSON.stringify(newUserData));
 			toast.success("Successfully registered!");
 			return true;

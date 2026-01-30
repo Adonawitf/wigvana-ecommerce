@@ -12,11 +12,15 @@ import catchAsync from "../utils/catchAsync.js";
  */
 export const protect = catchAsync(async (req, res, next) => {
   let token;
+  // Debug log to inspect headers
+  console.log('Incoming headers:', JSON.stringify(req.headers, null, 2));
+
   if (req.headers.authorization?.startsWith("Bearer")) {
     token = req.headers.authorization.split(" ")[1];
   }
 
   if (!token) {
+    console.error('No token found in Authorization header');
     throw new ApiError(
       httpStatusCodes.UNAUTHORIZED,
       "Not authorized, no token",

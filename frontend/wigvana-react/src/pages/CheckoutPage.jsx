@@ -85,7 +85,7 @@ const CheckoutPage = () => {
             };
 
             const { data: shippingAddr } = await client.post('/me/addresses', addressPayload);
-            const shippingAddressId = shippingAddr.id;
+            const shippingAddressId = shippingAddr.id || shippingAddr._id;
 
             // Step 2: Create Billing Address (Mirroring shipping for simplicity)
             // Note: Backend might allow reusing ID if logic supported, but usually distinct records for type.
@@ -93,7 +93,7 @@ const CheckoutPage = () => {
                 ...addressPayload,
                 addressType: 'billing'
             });
-            const billingAddressId = billingAddr.id;
+            const billingAddressId = billingAddr.id || billingAddr._id;
 
             // Step 3: Create Payment Method
             const { data: paymentMethod } = await client.post('/me/payment-methods', {
@@ -102,7 +102,7 @@ const CheckoutPage = () => {
                 billingAddressId: billingAddressId,
                 isDefault: true
             });
-            const paymentMethodId = paymentMethod.id;
+            const paymentMethodId = paymentMethod.id || paymentMethod._id;
 
             // Step 4: Place Order
             await client.post('/me/orders', {

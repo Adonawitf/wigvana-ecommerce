@@ -38,7 +38,7 @@ const startServer = async () => {
 
   // Handle unhandled promise rejections
   process.on("unhandledRejection", (err) => {
-    logger.error("UNHANDLED REJECTION! 💥 Shutting down...");
+    logger.error("UNHANDLED REJECTION! Shutting down...");
     logger.error(err.name, err.message, err.stack);
     server.close(() => {
       process.exit(1);
